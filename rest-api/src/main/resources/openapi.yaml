@@ -1,0 +1,169 @@
+openapi: '3.0.2'
+info:
+  title: Accreditation Service API
+  description: |
+    Provides endpoints for the Accreditation Application.
+  version: 1.0.0
+  contact:
+    name: "Diego Tremper"
+    email: diegotremper@gmail.com
+servers:
+  - url: http://localhost:8080
+    description: Local Environment
+tags:
+  - name: user
+    description: Exposed user validation APIs.
+paths:
+  /user/accreditation:
+    post:
+      operationId: user-accreditation
+      summary: Validate the user accredited status based on documents.
+      description: |
+        The accreditation endpoint validate the user documents based on the document format.
+        The response of this operation indicates if the validation was completed with success
+        and the documents are valid or not.
+      tags:
+        - user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccreditationProofRequest'
+            examples:
+              Example:
+                value:
+                  user_id: g8NlYJnk7zK9BlB1J2Ebjs0AkhCTpE1V
+                  payload:
+                    accreditation_type: BY_INCOME
+                    documents:
+                      - name: 2018.pdf
+                        mime_type: application/pdf
+                        content: "ICAiQC8qIjogWyJzcmMvKiJdCiAgICB9CiAgfQp9Cg=="
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccreditationProofResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        "406":
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        "500":
+          description: InternalServerError request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    AccreditationPayload:
+      description: |
+        The accreditation request payload.
+      type: object
+      properties:
+        accreditation_type:
+          type: string
+          enum: [ BY_INCOME ]
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+          minItems: 1
+          maxItems: 2
+      required:
+        - accreditation_type
+        - documents
+
+    Document:
+      description: |
+        Defines the user document to be validated.
+      type: object
+      properties:
+        name:
+          type: string
+          minItems: 3
+          maxLength: 100
+        mime_type:
+          type: string
+          pattern: \w+/[-+.\w]+
+        content:
+          type: string
+          format: byte
+      required:
+        - name
+        - mime_type
+        - content
+
+    UserId:
+      description: |
+        The user id schema.
+      type: string
+      nullable: false
+      minLength: 32
+      maxLength: 32
+
+    AccreditationProofRequest:
+      description: |
+        Defines the client request for accreditation validation.
+      type: object
+      properties:
+        user_id:
+          $ref: '#/components/schemas/UserId'
+        payload:
+          $ref: '#/components/schemas/AccreditationPayload'
+      required:
+        - user_id
+        - payload
+
+    AccreditationProofResponse:
+      description: |
+        Defines the client response for accreditation validation.
+      type: object
+      properties:
+        success:
+          description: |
+            Indicates whether the validation process was completed with success.
+          type: boolean
+        accredited:
+          description: |
+            Indicates whether the documents sent are valid or not.
+          type: boolean
+      required:
+        - success
+        - accredited
+
+    BadRequestResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+        code:
+          type: string
+      example:
+        errors:
+          - "missing information: field name"
+        code: "BadRequest"
+
+    InternalServerError:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+      example:
+        error: "unexpected error"
+        code: "InternalServerError"
