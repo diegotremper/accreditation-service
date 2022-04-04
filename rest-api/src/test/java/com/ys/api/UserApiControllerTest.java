@@ -98,7 +98,7 @@ class UserApiControllerTest {
 
   @Test
   @DisplayName(
-      "When a invalid accreditation type is provided, should return a not acceptable response")
+      "When a invalid accreditation type is provided, should return a bad request response")
   void testWithInvalidAccreditationType() throws Exception {
     mockMvc
         .perform(
@@ -108,15 +108,21 @@ class UserApiControllerTest {
                     "{\n"
                         + "    \"user_id\": \"g8NlYJnk7zK9BlB1J2Ebjs0AkhCTpE1V\",\n"
                         + "    \"payload\": {\n"
-                        + "        \"accreditation_type\": \"INVALID\"\n"
-                        + "        \"documents\": []\n"
+                        + "        \"accreditation_type\": \"INVALID\",\n"
+                        + "        \"documents\": [\n"
+                        + "            {\n"
+                        + "                \"name\": \"qweqwe.pdf\",\n"
+                        + "                \"mime_type\": \"application/pdf\",\n"
+                        + "                \"content\": \"ICAiQC8qIjogWyJzcmMvKiJdCiAgICB9CiAgfQp9Cg==\"\n"
+                        + "            }\n"
+                        + "        ]\n"
                         + "    }\n"
                         + "}"))
         .andDo(print())
-        .andExpect(status().isNotAcceptable())
+        .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code", is("BadRequest")))
         .andExpect(jsonPath("$.errors", hasSize(1)))
-        .andExpect(jsonPath("$.errors[0]", containsString("Unexpected value 'INVALID'")));
+        .andExpect(jsonPath("$.errors[0]", containsString("Invalid field 'payload.accreditationType': must not be null")));
   }
 
   @Test
